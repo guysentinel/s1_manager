@@ -13,7 +13,6 @@ import logging
 import tkinter.scrolledtext as ScrolledText
 import datetime
 import time
-import sys
 import base64
 
 
