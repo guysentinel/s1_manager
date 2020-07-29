@@ -7,8 +7,7 @@ On the current release, everything runs on a single thread so when executing a t
 Features:
 ---------
 
-**Export Events from Deep Visibility -
-**
+**Export Events from Deep Visibility -**
 
 Ability to export events from Deep Visibility to a CSV based on a Deep Visibility Query ID.
 
@@ -29,13 +28,13 @@ To generate a Deep Visibility query:
 ![image_1](dist/s1_manager/tk/images/image_1.png)
 
 
-**Export and Search Activity Log -
-**
+**Export and Search Activity Log -**
+
 Ability to search and export the activity log. Search is not Case Sensitive
 
 
-**Upgrade Agents from CSV -
-**
+**Upgrade Agents from CSV -**
+
 Ability to bulk upgrade agents from a named endpoint list in a CSV file.
 
 Usecase:
@@ -52,8 +51,7 @@ NOTE:  If you are using Microsoft Excel, make sure the ID cell is formatted as T
 3. Select a CSV containing a single column of endpoint names to be upgraded. Example -
 ![image_2](dist/s1_manager/tk/images/image_2.png)
 
-**Move Agents between Groups from CSV -
-**
+**Move Agents between Groups from CSV -**
 
 Usecase:
 1. We have an existing list that shows which endpoint belongs to which group
@@ -91,8 +89,7 @@ Process:
 ![image_2](dist/s1_manager/tk/images/image_2.png)
 
 
-**Decomission Agents from CSV -
-**
+**Decomission Agents from CSV -**
 
 Usecase:
 1. We have a named list of endpoints that need to be decomissioned
