@@ -17,6 +17,7 @@ To generate a Deep Visibility query:
 2. Go to the Deep Visibility Page and create the query. For example:
 
  AgentName Contains "test" AND AgentOS = "windows"
+ 
 ![image](dist/s1_manager/tk/images/image.png)
 
 3. Press F12 to open Chrome's Developer Tools.
@@ -49,6 +50,7 @@ Process:
 NOTE:  If you are using Microsoft Excel, make sure the ID cell is formatted as Text when imported, otherwise, some of the digits might be changed to zeros - https://support.microsoft.com/en-us/help/269370/last-digits-are-changed-to-zeroes-when-you-type-long-numbers-in-cells
 2. Insert the package ID
 3. Select a CSV containing a single column of endpoint names to be upgraded. Example -
+
 ![image_2](dist/s1_manager/tk/images/image_2.png)
 
 **Move Agents between Groups from CSV -**
@@ -66,8 +68,11 @@ Usecase:
 
 Process:
 1. Export groups list to get the relevant Group ID (Please see NOTE above about using Microsoft Excel)
+
 ![image_3](dist/s1_manager/tk/images/image_3.png)
+
 2. Create a CSV file containing two columns, source endpoints and target group IDs. For example -
+
 ![image_4](dist/s1_manager/tk/images/image_4.png)
 
 
@@ -86,6 +91,7 @@ Usecase:
 Process:
 1. Insert the Customer Identifier
 2. Select a CSV containing endpoint names (NOTE: If you have duplicate names, all the endpoints with this name will be assigned the same customer identifier)
+
 ![image_2](dist/s1_manager/tk/images/image_2.png)
 
 
@@ -99,6 +105,7 @@ OR we would like to surgically decomission only the specific endpoints in our li
 
 Process:
 1. Select a CSV containing endpoint names to be decomissioned (NOTE: If you have duplicate names, all the endpoints with this name will be decomissioned)
+
 ![image_2](dist/s1_manager/tk/images/image_2.png)
 
 
