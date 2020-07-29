@@ -3,11 +3,15 @@
 
 
 
-
 S1 Manager is a community project by SentinelOne Administrators and for SentinelOne Administrators
 It is a Python tool with Tkinter GUI based on SentinelOne Management Console API
 
 On the current release, everything runs on a single thread so when executing a task the GUI will appear to be "dead" (GUI cannot accept new events). You will just need to be patient :)
+
+
+[CLICK HERE TO DOWNLOAD THE TOOL ](https://github.com/guysentinel/s1_manager/blob/master/s1_manager.exe)
+========================================================================================================
+
 
 
 Features:
