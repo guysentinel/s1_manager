@@ -1,3 +1,9 @@
+![image_5](dist/s1_manager/tk/images/image_5.png)
+
+
+
+
+
 S1 Manager is a community project by SentinelOne Administrators and for SentinelOne Administrators
 It is a Python tool with Tkinter GUI based on SentinelOne Management Console API
 
