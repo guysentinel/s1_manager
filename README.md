@@ -120,7 +120,16 @@ Process:
 
 
 
+**Export all Agents to CSV - **
+
+Usecase:
+
+1. We want to export all of the endpoints in the console to CSV
+2. We have more than 10,000 endpoints
+3. The management console GUI button does not allow to export more than 10,000
 
 
+# NOTE: To use pyinstaller to move it to onefile, we need to import the babel.numbers module as well -
+pyinstaller --hidden-import babel.numbers --onefile s1_manager.py
 
 
