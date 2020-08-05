@@ -115,7 +115,7 @@ def switchFrames(framename):
 
 def exportFromDV():
     async def dv_query_to_csv(querytype, session, hostname, dv_query_id, headers, firstrun, proxy):
-        params = '/web/api/v2.1/dv/events/' + querytype + '?queryId=' + dv_query_id
+        params = '/web/api/v2.1/dv/events/' + querytype + '?queryId=' + dv_query_id + "&limit=1000"
         url = hostname + params
         while url:
             async with session.get(url, headers=headers, proxy=proxy, ssl=useSSL.get()) as response:
@@ -219,8 +219,21 @@ def exportFromDV():
                                 for key, value in data.items():
                                     tmp.append(value)
                                 f.writerow(tmp)
+
+                            elif querytype == "indicators":
+                                f = csv.writer(open("dv_indicators.csv", "a+", newline='', encoding='utf-8'))
+                                if firstrun:
+                                    tmp = []
+                                    for key, value in data.items():
+                                        tmp.append(key)
+                                    f.writerow(tmp)
+                                    firstrun = False
+                                tmp = []
+                                for key, value in data.items():
+                                    tmp.append(value)
+                                f.writerow(tmp)
                     if cursor:
-                        paramsnext = '/web/api/v2.1/dv/events/' + querytype + '?cursor=' + cursor + '&queryId=' + dv_query_id + '&limit=100'
+                        paramsnext = '/web/api/v2.1/dv/events/' + querytype + '?cursor=' + cursor + '&queryId=' + dv_query_id + '&limit=1000'
                         url = hostname + paramsnext
                     else:
                         url = None
@@ -247,6 +260,8 @@ def exportFromDV():
                     dv_query_to_csv('registry', session, hostname, query, headers, firstrun, proxy))
                 typescheduledtask = asyncio.create_task(
                     dv_query_to_csv('scheduled_task', session, hostname, query, headers, firstrun, proxy))
+                typeindicators = asyncio.create_task(
+                    dv_query_to_csv('indicators', session, hostname, query, headers, firstrun, proxy))
                 await typefile
                 await typeip
                 await typeurl
@@ -254,6 +269,7 @@ def exportFromDV():
                 await typeprocess
                 await typeregistry
                 await typescheduledtask
+                await typeindicators
 
     dv_query_id = queryIdEntry.get()
     if dv_query_id:
@@ -263,7 +279,7 @@ def exportFromDV():
         filename = filename.join(dv_query_id)
         workbook = Workbook(filename + '.xlsx')
         csvs = ["dv_file.csv", "dv_ip.csv", "dv_url.csv", "dv_dns.csv", "dv_process.csv", "dv_registry.csv",
-                "dv_scheduled_task.csv"]
+                "dv_scheduled_task.csv", "dv_indicators.csv"]
         for csvfile in csvs:
             worksheet = workbook.add_worksheet(csvfile.split(".")[0])
             if os.path.isfile(csvfile):
