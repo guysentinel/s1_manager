@@ -47,6 +47,7 @@ proxy = tk.StringVar()
 inputcsv = tk.StringVar()
 useSSL = tk.BooleanVar()
 useSSL.set(True)
+exportExclusionsFrame = tk.Frame()
 
 
 class TextHandler(logging.Handler):
@@ -115,7 +116,7 @@ def switchFrames(framename):
 
 def exportFromDV():
     async def dv_query_to_csv(querytype, session, hostname, dv_query_id, headers, firstrun, proxy):
-        params = '/web/api/v2.1/dv/events/' + querytype + '?queryId=' + dv_query_id + "&limit=1000"
+        params = '/web/api/v2.1/dv/events/' + querytype + '?queryId=' + dv_query_id
         url = hostname + params
         while url:
             async with session.get(url, headers=headers, proxy=proxy, ssl=useSSL.get()) as response:
@@ -219,21 +220,8 @@ def exportFromDV():
                                 for key, value in data.items():
                                     tmp.append(value)
                                 f.writerow(tmp)
-
-                            elif querytype == "indicators":
-                                f = csv.writer(open("dv_indicators.csv", "a+", newline='', encoding='utf-8'))
-                                if firstrun:
-                                    tmp = []
-                                    for key, value in data.items():
-                                        tmp.append(key)
-                                    f.writerow(tmp)
-                                    firstrun = False
-                                tmp = []
-                                for key, value in data.items():
-                                    tmp.append(value)
-                                f.writerow(tmp)
                     if cursor:
-                        paramsnext = '/web/api/v2.1/dv/events/' + querytype + '?cursor=' + cursor + '&queryId=' + dv_query_id + '&limit=1000'
+                        paramsnext = '/web/api/v2.1/dv/events/' + querytype + '?cursor=' + cursor + '&queryId=' + dv_query_id + '&limit=100'
                         url = hostname + paramsnext
                     else:
                         url = None
@@ -260,8 +248,6 @@ def exportFromDV():
                     dv_query_to_csv('registry', session, hostname, query, headers, firstrun, proxy))
                 typescheduledtask = asyncio.create_task(
                     dv_query_to_csv('scheduled_task', session, hostname, query, headers, firstrun, proxy))
-                typeindicators = asyncio.create_task(
-                    dv_query_to_csv('indicators', session, hostname, query, headers, firstrun, proxy))
                 await typefile
                 await typeip
                 await typeurl
@@ -269,7 +255,6 @@ def exportFromDV():
                 await typeprocess
                 await typeregistry
                 await typescheduledtask
-                await typeindicators
 
     dv_query_id = queryIdEntry.get()
     if dv_query_id:
@@ -279,7 +264,7 @@ def exportFromDV():
         filename = filename.join(dv_query_id)
         workbook = Workbook(filename + '.xlsx')
         csvs = ["dv_file.csv", "dv_ip.csv", "dv_url.csv", "dv_dns.csv", "dv_process.csv", "dv_registry.csv",
-                "dv_scheduled_task.csv", "dv_indicators.csv"]
+                "dv_scheduled_task.csv"]
         for csvfile in csvs:
             worksheet = workbook.add_worksheet(csvfile.split(".")[0])
             if os.path.isfile(csvfile):
@@ -658,6 +643,374 @@ def decomissionAgents():
             line_count += 1
         logger.info(f'Finished! Processed {line_count} lines.')
 
+def exportExclusions():
+    st = ScrolledText.ScrolledText(master=exportExclusionsFrame, state='disabled')
+    st.configure(font='TkFixedFont')
+    st.grid(row=3, column=0, columnspan=3, pady=2)
+    text_handler = TextHandler(st)
+    logging.basicConfig(filename='exportExclusions.log',
+                        level=logging.INFO,
+                        format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger()
+    logger.addHandler(text_handler)
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": "ApiToken " + apitoken.get()}
+
+    async def getAccounts(session):
+        params = '/web/api/' + APIv + '/accounts?limit=100' + '&countOnly=false&tenant=true'
+        url = hostname.get() + params
+        while url:
+            async with session.get(url, headers=headers, proxy=proxy.get()) as response:
+                if response.status != 200:
+                    logger.error('Status: ' + str(response.status) + ' Problem with the request. Exiting.')
+                else:
+                    data = await (response.json())
+                    cursor = data['pagination']['nextCursor']
+                    data = data['data']
+                    if data:
+                        for account in data:
+                            # print('ACCOUNT: ' + account['id'] + ' | ' + account['name'])
+                            dictAccounts[account['id']] = account['name']
+                    if cursor:
+                        paramsnext = '/web/api/' + APIv + '/accounts?limit=100' + '&cursor=' + cursor + '&countOnly=false&tenant=true'
+                        url = hostname.get() + paramsnext
+                    else:
+                        url = None
+
+    async def getSites(session):
+        params = '/web/api/' + APIv + '/sites?limit=100' + '&countOnly=false&tenant=true'
+        url = hostname.get() + params
+        while url:
+            async with session.get(url, headers=headers, proxy=proxy.get()) as response:
+                if response.status != 200:
+                    logger.error('Status: ' + str(response.status) + ' Problem with the request. Exiting.')
+                else:
+                    data = await (response.json())
+                    cursor = data['pagination']['nextCursor']
+                    data = data['data']
+                    if data:
+                        for site in data['sites']:
+                            # print('SITE: ' + site['id'] + ' | ' + site['name'])
+                            dictSites[site['id']] = site['name']
+                    if cursor:
+                        paramsnext = '/web/api/' + APIv + '/sites?limit=100' + '&cursor=' + cursor + '&countOnly=false&tenant=true'
+                        url = hostname.get() + paramsnext
+                    else:
+                        url = None
+
+    async def getGroups(session):
+        params = '/web/api/' + APIv + '/groups?limit=100' + '&countOnly=false&tenant=true'
+        url = hostname.get() + params
+        while url:
+            async with session.get(url, headers=headers, proxy=proxy.get()) as response:
+                if response.status != 200:
+                    logger.error('Status: ' + str(response.status) + ' Problem with the request. Exiting.')
+                else:
+                    data = await (response.json())
+                    cursor = data['pagination']['nextCursor']
+                    data = data['data']
+                    if data:
+                        for group in data:
+                            # print('GROUP: ' + group['id'] + ' | ' + group['name'] + ' | ' + group['siteId'])
+                            dictGroups[group['id']] = group['name']
+                    if cursor:
+                        paramsnext = '/web/api/' + APIv + '/groups?limit=100' + '&cursor=' + cursor + '&countOnly=false&tenant=true'
+                        url = hostname.get() + paramsnext
+                    else:
+                        url = None
+
+    async def exceptions_to_csv(querytype, session, scope, exparam):
+        firstrunpath = True
+        firstruncert = True
+        firstrunbrowser = True
+        firstrunfile = True
+        firstrunhash = True
+
+        params = '/web/api/' + APIv + '/exclusions?limit=1000&type=' + querytype + '&countOnly=false'
+        url = hostname.get() + params + exparam
+        while url:
+            async with session.get(url, headers=headers, proxy=proxy.get()) as response:
+                if response.status != 200:
+                    logger.error('Status: ' + str(response.status) + ' Problem with the request. Exiting.')
+                    logger.error('Details of above: ' + url)
+                else:
+                    data = await (response.json())
+                    cursor = data['pagination']['nextCursor']
+                    data = data['data']
+                    if data:
+                        for data in data:
+                            if querytype == 'path':
+                                f = csv.writer(open("exceptions_path.csv", "a+", newline='', encoding='utf-8'))
+                                if firstrunpath:
+                                    tmp = []
+                                    tmp.append('Scope')
+                                    for key, value in data.items():
+                                        tmp.append(key)
+                                    f.writerow(tmp)
+                                    firstrunpath = False
+                                tmp = []
+                                tmp.append(scope)
+                                for key, value in data.items():
+                                    tmp.append(value)
+                                f.writerow(tmp)
+
+                            elif querytype == 'certificate':
+                                f = csv.writer(open("exceptions_certificate.csv", "a+", newline='', encoding='utf-8'))
+                                if firstruncert:
+                                    tmp = []
+                                    tmp.append('Scope')
+                                    for key, value in data.items():
+                                        tmp.append(key)
+                                    f.writerow(tmp)
+                                    firstruncert = False
+                                tmp = []
+                                tmp.append(scope)
+                                for key, value in data.items():
+                                    tmp.append(value)
+                                f.writerow(tmp)
+
+                            elif querytype == 'browser':
+                                f = csv.writer(open("exceptions_browser.csv", "a+", newline='', encoding='utf-8'))
+                                if firstrunbrowser:
+                                    tmp = []
+                                    tmp.append('Scope')
+                                    for key, value in data.items():
+                                        tmp.append(key)
+                                    f.writerow(tmp)
+                                    firstrunbrowser = False
+                                tmp = []
+                                tmp.append(scope)
+                                for key, value in data.items():
+                                    tmp.append(value)
+                                f.writerow(tmp)
+
+                            elif querytype == 'file_type':
+                                f = csv.writer(open("exceptions_file_type.csv", "a+", newline='', encoding='utf-8'))
+                                if firstrunfile:
+                                    tmp = []
+                                    tmp.append('Scope')
+                                    for key, value in data.items():
+                                        tmp.append(key)
+                                    f.writerow(tmp)
+                                    firstrunfile = False
+                                tmp = []
+                                tmp.append(scope)
+                                for key, value in data.items():
+                                    tmp.append(value)
+                                f.writerow(tmp)
+
+                            elif querytype == 'white_hash':
+                                f = csv.writer(open("exceptions_white_hash.csv", "a+", newline='', encoding='utf-8'))
+                                if firstrunhash:
+                                    tmp = []
+                                    tmp.append('Scope')
+                                    for key, value in data.items():
+                                        tmp.append(key)
+                                    f.writerow(tmp)
+                                    firstrunhash = False
+                                tmp = []
+                                tmp.append(scope)
+                                for key, value in data.items():
+                                    tmp.append(value)
+                                f.writerow(tmp)
+
+                    if cursor:
+                        paramsnext = '/web/api/' + APIv + '/exclusions?limit=1000&type=' + querytype + '&countOnly=false' + '&cursor=' + cursor
+                        url = hostname.get() + paramsnext + exparam
+                    else:
+                        url = None
+
+    async def run(scope):
+        async with aiohttp.ClientSession() as session:
+
+            if scope == 'Account':
+                exparam = '&accountIds='
+                l = len(dictAccounts.items())
+                i = 0
+                for key, value in dictAccounts.items():
+                    typepath = asyncio.create_task(
+                        exceptions_to_csv('path', session, scope + '|' + value + ' | ' + key,
+                                          exparam + key))
+                    typecert = asyncio.create_task(exceptions_to_csv('certificate', session,
+                                                                     scope + '|' + value + ' | ' + key, exparam + key))
+                    typebrowser = asyncio.create_task(exceptions_to_csv('browser', session,
+                                                                        scope + '|' + value + ' | ' + key,
+                                                                        exparam + key))
+                    typefile_type = asyncio.create_task(
+                        exceptions_to_csv('file_type', session,
+                                          scope + '|' + value + ' | ' + key, exparam + key))
+                    typewhite_hash = asyncio.create_task(
+                        exceptions_to_csv('white_hash', session,
+                                          scope + '|' + value + ' | ' + key, exparam + key))
+                    await typefile_type
+                    await typebrowser
+                    await typecert
+                    await typepath
+                    await typewhite_hash
+                    i = i + 1
+            elif scope == 'Site':
+                exparam = '&siteIds='
+                l = len(dictSites.items())
+                i = 0
+                for key, value in dictSites.items():
+                    typepath = asyncio.create_task(
+                        exceptions_to_csv('path', session, scope + '|' + value + ' | ' + key,
+                                          exparam + key))
+                    typecert = asyncio.create_task(exceptions_to_csv('certificate', session,
+                                                                     scope + '|' + value + ' | ' + key, exparam + key))
+                    typebrowser = asyncio.create_task(exceptions_to_csv('browser', session,
+                                                                        scope + '|' + value + ' | ' + key,
+                                                                        exparam + key))
+                    typefile_type = asyncio.create_task(
+                        exceptions_to_csv('file_type', session,
+                                          scope + '|' + value + ' | ' + key, exparam + key))
+                    typewhite_hash = asyncio.create_task(
+                        exceptions_to_csv('white_hash', session,
+                                          scope + '|' + value + ' | ' + key, exparam + key))
+                    await typefile_type
+                    await typebrowser
+                    await typecert
+                    await typepath
+                    await typewhite_hash
+                    i = i + 1
+            elif scope == 'Group':
+                exparam = '&groupIds='
+                l = len(dictGroups.items())
+                i = 0
+                for key, value in dictGroups.items():
+                    typepath = asyncio.create_task(
+                        exceptions_to_csv('path', session, scope + '|' + value + ' | ' + key,
+                                          exparam + key))
+                    typecert = asyncio.create_task(exceptions_to_csv('certificate', session,
+                                                                     scope + '|' + value + ' | ' + key, exparam + key))
+                    typebrowser = asyncio.create_task(exceptions_to_csv('browser', session,
+                                                                        scope + '|' + value + ' | ' + key,
+                                                                        exparam + key))
+                    typefile_type = asyncio.create_task(
+                        exceptions_to_csv('file_type', session,
+                                          scope + '|' + value + ' | ' + key, exparam + key))
+                    typewhite_hash = asyncio.create_task(
+                        exceptions_to_csv('white_hash', session,
+                                          scope + '|' + value + ' | ' + key, exparam + key))
+                    await typefile_type
+                    await typebrowser
+                    await typecert
+                    await typepath
+                    await typewhite_hash
+                    i = i + 1
+            elif scope == 'Global':
+                exparam = ''
+                key = ''
+                typepath = asyncio.create_task(
+                    exceptions_to_csv('path', session, scope, exparam + key))
+                typecert = asyncio.create_task(
+                    exceptions_to_csv('certificate', session, scope, exparam + key))
+                typebrowser = asyncio.create_task(
+                    exceptions_to_csv('browser', session, scope, exparam + key))
+                typefile_type = asyncio.create_task(
+                    exceptions_to_csv('file_type', session, scope, exparam + key))
+                typewhite_hash = asyncio.create_task(
+                    exceptions_to_csv('white_hash', session, scope, exparam + key))
+                await typefile_type
+                await typebrowser
+                await typecert
+                await typepath
+                await typewhite_hash
+
+    async def runAccounts():
+        async with aiohttp.ClientSession() as session:
+
+            accounts = asyncio.create_task(getAccounts(session))
+            await accounts
+
+    async def runSites():
+        async with aiohttp.ClientSession() as session:
+
+            sites = asyncio.create_task(getSites(session))
+            await sites
+
+    async def runGroups():
+        async with aiohttp.ClientSession() as session:
+
+            groups = asyncio.create_task(getGroups(session))
+            await groups
+
+    def getScope():
+        r = requests.get(hostname.get() + "/web/api/v2.1/user", headers=headers, proxies={'http': proxy})
+        if (r.status_code == 200):
+            data = r.json()
+            return data['data']['scope']
+        else:
+            logger.error('Status: ' + str(r.status_code) + ' Problem with the request. Details ' + str(r.text))
+
+
+
+    APIv = 'v2.1'
+
+    dictAccounts = {}
+    dictSites = {}
+    dictGroups = {}
+    tokenscope = getScope()
+
+    if tokenscope != 'site':
+        logger.info('Getting account/site/group structure for ' + hostname.get())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(runAccounts())
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(runSites())
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(runGroups())
+    logger.info('Finished getting account/site/group structure!')
+    logger.info('Accounts found: ' + str(len(dictAccounts)) + ' | ' + 'Sites found: ' + str(
+        len(dictSites)) + ' | ' + 'Groups found: ' + str(len(dictGroups)))
+
+    if tokenscope == 'global':
+        logger.info('Getting GLOBAL scope exceptions...')
+        scope = "Global"
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(run(scope))
+
+    if tokenscope != 'site':
+        logger.info('Getting ACCOUNT scope exceptions...')
+        scope = "Account"
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(run(scope))
+
+    logger.info('Getting SITE scope exceptions...')
+    scope = "Site"
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run(scope))
+
+    logger.info('Getting GROUP scope exceptions...')
+    scope = "Group"
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run(scope))
+
+    logger.info('Creating XLSX...')
+
+    filename = "Exceptions"
+    workbook = Workbook(filename + '.xlsx')
+    csvs = ["exceptions_path.csv", "exceptions_certificate.csv", "exceptions_browser.csv", "exceptions_file_type.csv",
+            "exceptions_white_hash.csv"]
+    for csvfile in csvs:
+        worksheet = workbook.add_worksheet(csvfile.split(".")[0])
+        if os.path.isfile(csvfile):
+            with open(csvfile, 'r', encoding="utf8") as f:
+                reader = csv.reader(f)
+                for r, row in enumerate(reader):
+                    for c, col in enumerate(row):
+                        worksheet.write(r, c, col)
+        if os.path.exists(csvfile):
+            os.remove(csvfile)
+    workbook.close()
+    logger.info("Done! Created the file " + filename + ".xlsx")
+
+
+
+
 
 def selectCSVFile():
     file = tkinter.filedialog.askopenfilename()
@@ -717,6 +1070,9 @@ tk.Button(master=mainMenuFrame, text="Decomission Agents from CSV",
 tk.Button(master=mainMenuFrame, text="Export All Endpoints to CSV",
           command=partial(switchFrames, exportAllAgentsFrame)).grid(row=3, column=0, pady=10)
 tk.Label(master=mainMenuFrame, text="Version: Kauai", font=("Courier", 10)).grid(row=4, column=1, pady=10)
+
+tk.Button(master=mainMenuFrame, text="Export Exclusions",
+         command=partial(switchFrames, exportExclusionsFrame)).grid(row=3, column=2, pady=10)
 
 # Export from DV Frame
 tk.Label(master=exportFromDVFrame, text="Export Deep Visiblity Events to CSV", font=("Courier", 44)).grid(row=0,
@@ -831,6 +1187,15 @@ tk.Button(master=exportActivityLogFrame, text="Back to Main Menu", font=("Courie
     row=9, column=0, pady=2)
 
 
+# Export Exceptions
+tk.Label(master=exportExclusionsFrame, text="Export Exclusions to CSV", font=("Courier", 44)).grid(row=0,
+                                                                                                          column=0,
+                                                                                                          columnspan=2,
+                                                                                                          pady=20)
+tk.Button(master=exportExclusionsFrame, text="Export", font=("Courier", 15),
+          command=exportExclusions).grid(row=1, column=0, pady=2)
+tk.Button(master=exportExclusionsFrame, text="Back to Main Menu", font=("Courier", 22), command=goBacktoMainPage).grid(
+    row=2, column=0, pady=2)
 
 # Export all agents Frame
 tk.Label(master=exportAllAgentsFrame, text="Export Endpoints Details to CSV", font=("Courier", 44)).grid(row=0,

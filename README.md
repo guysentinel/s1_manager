@@ -9,7 +9,7 @@ It is a Python tool with Tkinter GUI based on SentinelOne Management Console API
 On the current release, everything runs on a single thread so when executing a task the GUI will appear to be "dead" (GUI cannot accept new events). You will just need to be patient :)
 
 
-[CLICK HERE TO DOWNLOAD THE TOOL ](https://github.com/guysentinel/s1_manager/blob/master/s1_manager.exe)
+[CLICK HERE TO DOWNLOAD THE TOOL ](https://github.com/guysentinel/s1_manager/blob/master/dist/s1_manager.exe)
 ========================================================================================================
 
 
@@ -130,6 +130,6 @@ Usecase:
 
 
 # NOTE: To use pyinstaller to move it to onefile, we need to import the babel.numbers module as well -
-pyinstaller --hidden-import babel.numbers --onefile s1_manager.py
+pyinstaller --hidden-import babel.numbers --icon=s1-favicon-big.ico --onefile s1_manager.py
 
 
