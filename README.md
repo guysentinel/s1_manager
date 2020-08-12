@@ -128,6 +128,20 @@ Usecase:
 2. We have more than 10,000 endpoints
 3. The management console GUI button does not allow to export more than 10,000
 
+**Export Exclusions to CSV -**
+
+Usecase:
+
+We want to export all existing exclusions located under our account
+
+Process:
+
+1. Insert the management console address - Example:
+Https://abc-corp.sentinelone.net
+2. Enter the API token for the user
+Note: The script will use the user credentials according to the permissions assigned
+3. Add proxy address (if exist) 
+4. On-prem customers that use self-sign certificate will need to uncheck the "Use SSL" option before the log-in
 
 # NOTE: To use pyinstaller to move it to onefile, we need to import the babel.numbers module as well -
 pyinstaller --hidden-import babel.numbers --icon=s1-favicon-big.ico --onefile s1_manager.py
