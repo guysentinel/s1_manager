@@ -78,7 +78,7 @@ def testLogin(hostname, apitoken, proxy):
     headers = {
         "Content-type": "application/json",
         "Authorization": "ApiToken " + apitoken}
-    r = requests.get(hostname + "/web/api/v2.1/system/info", headers=headers, proxies={'http': proxy}, verify=useSSL.get())
+    r = requests.get(hostname + "/web/api/v2.1/system/info", headers=headers, proxies={'http': proxy, 'https' : proxy}, verify=useSSL.get())
     if (r.status_code == 200):
         return True
     else:
@@ -304,7 +304,7 @@ def exportActivityLog(searchOnly):
         url = hostname.get() + f'/web/api/v2.1/activities?limit=1000&createdAt__between={fromdate_epoch}-{todate_epoch}&countOnly=false&includeHidden=false'
         if searchOnly:
             while url:
-                response = requests.get(url, headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+                response = requests.get(url, headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
                 if response.status_code != 200:
                     logger.error('Status: ' + str(response.status_code) + ' Problem with the request. Details - ' + str(
                         response.text))
@@ -331,7 +331,7 @@ def exportActivityLog(searchOnly):
             f = csv.writer(open(f"activityLogExport{timestamp}.csv", "a+", newline='', encoding='utf-8'))
             firstrun = True
             while url:
-                response = requests.get(url, headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+                response = requests.get(url, headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
                 if response.status_code != 200:
                     logger.error('Status: ' + str(response.status_code) + ' Problem with the request. Details - ' + str(
                         response.text))
@@ -384,7 +384,7 @@ def upgradeFromCSV(justPackages):
             ['Name', 'ID', 'Version', 'OS Type', 'OS Arch', 'Package Type', 'File Extension', 'Status', 'Scope Level'])
 
         while url:
-            response = requests.get(url, headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+            response = requests.get(url, headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
             if response.status_code != 200:
                 logger.error('Status: ' + str(response.status_code) + ' Problem with the request. Details - ' + str(
                     response.text))
@@ -419,7 +419,7 @@ def upgradeFromCSV(justPackages):
                         "packageId": packageIDEntry.get()
                     }
                 }
-                response = requests.post(url, data=json.dumps(body), headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+                response = requests.post(url, data=json.dumps(body), headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
                 if response.status_code != 200:
                     logger.error('Failed to upgrade endpoint ' + row[0] + ' Error code: '
                                  + str(response.status_code) + ' Description: ' + str(response.text))
@@ -449,7 +449,7 @@ def moveAgents(justGroups):
         f = csv.writer(open("group_to_id_map.csv", "a+", newline='', encoding='utf-8'))
         f.writerow(['Name', 'ID', 'Site ID', 'Created By'])
         while url:
-            response = requests.get(url, headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+            response = requests.get(url, headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
             if response.status_code != 200:
                 logger.error('Status: ' + str(response.status_code) + ' Problem with the request. Details - ' + str(
                     response.text))
@@ -480,7 +480,7 @@ def moveAgents(justGroups):
                         "computerName": row[0]
                     }
                 }
-                response = requests.put(url, data=json.dumps(body), headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+                response = requests.put(url, data=json.dumps(body), headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
                 if response.status_code != 200:
                     logger.error('Failed to transfer endpoint ' + row[0] + ' to group ' + row[1] + ' Error code: '
                                  + str(response.status_code) + ' Description: ' + str(response.text))
@@ -518,7 +518,7 @@ def assignCustomerIdentifier():
                     "externalId": customerIdentifierEntry.get()
                 }
             }
-            response = requests.post(url, data=json.dumps(body), headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+            response = requests.post(url, data=json.dumps(body), headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
             if response.status_code != 200:
                 logger.error('Failed to update customer identifier for endpoint ' + row[0] + ' Error code: '
                              + str(response.status_code) + ' Description: ' + str(response.text))
@@ -555,7 +555,7 @@ def exportAllAgents():
     firstrun = True
     url = hostname.get() + '/web/api/v2.1/agents?limit=100'
     while url:
-        response = requests.get(url, headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+        response = requests.get(url, headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
         if response.status_code != 200:
             logger.error('Status: ' + str(response.status_code) + ' Problem with the request. Details - ' + str(
                 response.text))
@@ -604,7 +604,7 @@ def decomissionAgents():
             logger.info(f'\t Decomissioning Endpoint -  {row[0]}')
             logger.info(f'Getting endpoint ID for {row[0]}')
             url = hostname.get() + f'/web/api/v2.1/agents?countOnly=false&computerName={row[0]}&limit=1000'
-            response = requests.get(url, headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+            response = requests.get(url, headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
             if response.status_code != 200:
                 logger.error('Failed to get ID for endpoint ' + row[0] + ' Error code: '
                              + str(response.status_code) + ' Description: ' + str(response.text))
@@ -626,7 +626,7 @@ def decomissionAgents():
                             "ids": uuidslist
                         }
                     }
-                    response = requests.post(url, data=json.dumps(body), headers=headers, proxies={'http': proxy.get()}, verify=useSSL.get())
+                    response = requests.post(url, data=json.dumps(body), headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
                     if response.status_code != 200:
                         logger.error('Failed to decomission endpoint ' + row[0] + ' Error code: '
                                      + str(response.status_code) + ' Description: ' + str(response.text))
