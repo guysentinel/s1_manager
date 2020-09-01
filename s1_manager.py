@@ -80,16 +80,26 @@ def testLogin(hostname, apitoken, proxy):
         "Authorization": "ApiToken " + apitoken}
     r = requests.get(hostname + "/web/api/v2.1/system/info", headers=headers, proxies={'http': proxy, 'https' : proxy}, verify=useSSL.get())
     if (r.status_code == 200):
-        return True
+        return headers, True
+    elif (r.status_code != 200):
+        headers = {
+        "Content-type": "application/json",
+        "Authorization": "Token " + apitoken}
+    r = requests.get(hostname + "/web/api/v2.1/system/info", headers=headers, proxies={'http': proxy, 'https': proxy},
+                     verify=useSSL.get())
+    if (r.status_code == 200):
+        return headers, True
     else:
-        return False
+        return 0, False
 
 
 def login():
     hostname.set(consoleAddressEntry.get())
     apitoken.set(apikTokenEntry.get())
     proxy.set(proxyEntry.get())
-    if (testLogin(hostname.get(), apitoken.get(), proxy.get())):
+    global headers
+    headers, login_succ = (testLogin(hostname.get(), apitoken.get(), proxy.get()))
+    if login_succ:
         loginMenuFrame.pack_forget()
         mainMenuFrame.pack()
     else:
@@ -228,9 +238,6 @@ def exportFromDV():
 
     async def run(hostname, dv_query_id, apitoken, proxy):
         async with aiohttp.ClientSession() as session:
-            headers = {
-                "Content-type": "application/json",
-                "Authorization": "ApiToken " + apitoken}
             for query in dv_query_id:
                 firstrun = False
                 if query == dv_query_id[0]:
@@ -293,9 +300,7 @@ def exportActivityLog(searchOnly):
                         format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     logger.addHandler(text_handler)
-    headers = {
-        "Content-type": "application/json",
-        "Authorization": "ApiToken " + apitoken.get()}
+
     os.environ['TZ'] = 'UTC'
     p = "%Y-%m-%d"
     fromdate_epoch = str(int(time.mktime(time.strptime(dateFrom.get(), p)))) + "000"
@@ -372,9 +377,7 @@ def upgradeFromCSV(justPackages):
                         format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     logger.addHandler(text_handler)
-    headers = {
-        "Content-type": "application/json",
-        "Authorization": "ApiToken " + apitoken.get()}
+
 
     if justPackages:
         params = '/web/api/v2.1/update/agent/packages?sortBy=updatedAt&sortOrder=desc&countOnly=false&limit=1000'
@@ -440,9 +443,7 @@ def moveAgents(justGroups):
                         format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     logger.addHandler(text_handler)
-    headers = {
-        "Content-type": "application/json",
-        "Authorization": "ApiToken " + apitoken.get()}
+
     if justGroups:
         params = '/web/api/v2.0/groups?isDefault=false&limit=100&type=static&countOnly=false'
         url = hostname.get() + params
@@ -501,9 +502,7 @@ def assignCustomerIdentifier():
                         format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     logger.addHandler(text_handler)
-    headers = {
-        "Content-type": "application/json",
-        "Authorization": "ApiToken " + apitoken.get()}
+
     with open(inputcsv.get()) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
@@ -546,9 +545,7 @@ def exportAllAgents():
                         format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     logger.addHandler(text_handler)
-    headers = {
-        "Content-type": "application/json",
-        "Authorization": "ApiToken " + apitoken.get()}
+
 
     timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     f = csv.writer(open(f"endpointsexport_{timestamp}.csv", "a+", newline='', encoding='utf-8'))
@@ -594,9 +591,7 @@ def decomissionAgents():
                         format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     logger.addHandler(text_handler)
-    headers = {
-        "Content-type": "application/json",
-        "Authorization": "ApiToken " + apitoken.get()}
+
     with open(inputcsv.get()) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
@@ -653,9 +648,7 @@ def exportExclusions():
                         format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     logger.addHandler(text_handler)
-    headers = {
-        "Content-type": "application/json",
-        "Authorization": "ApiToken " + apitoken.get()}
+
 
     async def getAccounts(session):
         params = '/web/api/' + APIv + '/accounts?limit=100' + '&countOnly=false&tenant=true'
@@ -1022,7 +1015,7 @@ consoleAddressLabel = tk.Label(master=loginMenuFrame,
                                text="Insert the full URL of the management console i.e https://abc-corp.sentinelone.net")
 consoleAddressEntry = tk.Entry(master=loginMenuFrame, width=80)
 apikTokenLabel = tk.Label(master=loginMenuFrame,
-                          text="Insert your API Token. See the API Documentation for more information on how to generate it")
+                          text="Insert your Token / API Token. See the API Documentation for more information on how to generate it")
 apikTokenEntry = tk.Entry(master=loginMenuFrame, width=80)
 proxyLabel = tk.Label(master=loginMenuFrame,
                       text="Insert Proxy details i.e http://username:password@proxy.com - If not used, keep Blank")
