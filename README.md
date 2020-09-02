@@ -145,6 +145,8 @@ We want to export all existing exclusions located under our account
 ![](.README_images/8cf66cf4.png)
 
 # NOTE: To use pyinstaller to move it to onefile, we need to import the babel.numbers module as well -
+# This will build the script to be in an exe windows 
+If you don't have pyinstaller, install it: "pip install pyinstaller"
 pyinstaller --hidden-import babel.numbers --icon=s1-favicon-big.ico --onefile s1_manager.py
 
 
