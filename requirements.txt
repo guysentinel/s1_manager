@@ -13,7 +13,6 @@ PySocks==1.7.1
 pywin32-ctypes==0.2.0
 requests==2.24.0
 schedule==0.6.0
-sentinelone-management-sdk==1.0.2.31
 six==1.15.0
 soupsieve==2.0.1
 tqdm==4.48.0
