@@ -1073,7 +1073,10 @@ tk.Label(master=exportFromDVFrame, text="Export Deep Visiblity Events to CSV", f
                                                                                                           columnspan=2,
                                                                                                           pady=20)
 tk.Label(master=exportFromDVFrame,
-         text="Insert Deep Visiblity Query ID (i.e stream6a...123) \n If you have more than 20K results, you can concat several smaller queries seperated by comma (i.e stream9a...123,stream2b...129,stream8s...145)",
+         text="""Insert Deep Visiblity Query ID (i.e stream6a...123)
+         This could be done by pressing the F12 button in Chrome (will open the Dev-Tools), and searching for the queryid=
+         If you have more than 20K results, you can concat several smaller queries separated by comma (i.e stream9a...123,stream2b...129,stream8s...145)
+         For more info: https://github.com/guysentinel/s1_manager/blob/master/README.md""",
          font=("Courier", 10)).grid(row=1, column=0, pady=2)
 queryIdEntry = tk.Entry(master=exportFromDVFrame, width=80)
 queryIdEntry.grid(row=2, column=0, pady=2)
