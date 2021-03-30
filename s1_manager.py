@@ -474,8 +474,25 @@ def moveAgents(justGroups):
             csv_reader = csv.reader(csv_file, delimiter=',')
             line_count = 0
             for row in csv_reader:
-                logger.info(f'\t Moving endpoint name {row[0]} to group ID {row[1]}')
-                url = hostname.get() + '/web/api/v2.0/groups/' + row[1] + '/move-agents'
+                logger.info(f'\t Moving endpoint name {row[0]} to Site ID {row[2]}')
+                url = hostname.get() + '/web/api/v2.1/agents/actions/move-to-site'
+                body = {
+                    "filter": {
+                        "computerName": row[0]
+                    },
+                    "data" : {
+                        "targetSiteId" : row[2]
+                    }
+                }
+                response = requests.post(url, data=json.dumps(body), headers=headers, proxies={'http': proxy.get(), 'https': proxy.get()}, verify=useSSL.get())
+                if response.status_code != 200:
+                    logger.error('Failed to transfer endpoint ' + row[0] + ' to site ' + row[1] + ' Error code: '
+                                 + str(response.status_code) + ' Description: ' + str(response.text))
+                else:
+                    data = response.json()
+                    logger.info(f'Moved {data["data"]["affected"]} endpoints')
+                logger.info(f'\t Moving endpoint name {row[0]} to Group ID {row[1]}')
+                url = hostname.get() + '/web/api/v2.1/groups/' + row[1] + '/move-agents'
                 body = {
                     "filter": {
                         "computerName": row[0]
@@ -1110,7 +1127,7 @@ tk.Label(master=moveAgentsFrame, text="Move Agents between Groups from CSV", fon
 tk.Button(master=moveAgentsFrame, text="Export Groups List (to get the relevant Group ID)", font=("Courier", 15),
           command=partial(moveAgents, True)).grid(row=1, column=0, pady=2)
 tk.Label(master=moveAgentsFrame,
-         text="Select a CSV file containing two columns with endpoints names and target group IDs",
+         text="Select a CSV file containing three columns - endpoints names, target group IDs, target site IDs",
          font=("Courier", 12)).grid(row=2, column=0, pady=2)
 tk.Button(master=moveAgentsFrame, text="Browse", font=("Courier", 15), command=selectCSVFile).grid(row=3, column=0,
                                                                                                    pady=2)
@@ -1199,7 +1216,6 @@ tk.Button(master=exportAllAgentsFrame, text="Export", font=("Courier", 15),
           command=exportAllAgents).grid(row=1, column=0, pady=2)
 tk.Button(master=exportAllAgentsFrame, text="Back to Main Menu", font=("Courier", 22), command=goBacktoMainPage).grid(
     row=2, column=0, pady=2)
-
 
 
 window.mainloop()
